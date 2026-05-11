@@ -39,6 +39,25 @@ button{
     background:#ff4d6d;
     color:white;
     font-size:16px;
+    transition:0.15s;
+}
+
+/* 滑鼠移上去 */
+button:hover{
+    background:#ff6b86;
+}
+
+/* 按下去 */
+button:active{
+    background:#ffffff;
+    color:#111;
+    transform:scale(0.95);
+}
+
+/* 啟動中的按鈕 */
+.activeBtn{
+    background:#00c853 !important;
+    color:white;
 }
 
 .gallery{
@@ -63,12 +82,19 @@ button{
     background:#1b1b1b;
     border-radius:12px;
     overflow:hidden;
+    position:relative;
 }
 
 .card img{
     width:100%;
     display:block;
     cursor:pointer;
+    transition:0.2s;
+}
+
+.card img:hover{
+    opacity:0.8;
+    transform:scale(1.02);
 }
 
 .deleteBtn{
@@ -196,7 +222,7 @@ button{
             關閉
         </button>
 
-        <button onclick="startSlideshow()">
+        <button onclick="startSlideshow(event)">
             自動播放
         </button>
 
@@ -353,6 +379,7 @@ function openFolder(folder){
         card.innerHTML = `
             <img 
                 src="${url}"
+                style="cursor:pointer"
                 onclick="openModal('${url}')"
             >
 
@@ -493,10 +520,24 @@ function stopSlideshow(){
 
     clearInterval(slideshowInterval);
 
+    document
+        .querySelectorAll("button")
+        .forEach(btn=>{
+            btn.classList.remove("activeBtn");
+        });
+
 }
 
 // ===== 自動播放 =====
-function startSlideshow(){
+function startSlideshow(event){
+
+    document
+        .querySelectorAll("button")
+        .forEach(btn=>{
+            btn.classList.remove("activeBtn");
+        });
+
+    event.target.classList.add("activeBtn");
 
     stopSlideshow();
 
