@@ -22,9 +22,9 @@ body{
     flex-direction:column;
 }
 
-input{
+input,
+select{
     padding:12px;
-    width:260px;
     border:none;
     border-radius:10px;
     margin-top:10px;
@@ -68,6 +68,7 @@ button{
 .card img{
     width:100%;
     display:block;
+    cursor:pointer;
 }
 
 .deleteBtn{
@@ -95,6 +96,34 @@ button{
 
 .backBtn{
     margin-bottom:20px;
+}
+
+.modal{
+    display:none;
+    position:fixed;
+    z-index:999;
+    left:0;
+    top:0;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,0.95);
+    justify-content:center;
+    align-items:center;
+    flex-direction:column;
+}
+
+.modal img{
+    max-width:95%;
+    max-height:85%;
+    border-radius:10px;
+}
+
+.slideControls{
+    margin-top:20px;
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    justify-content:center;
 }
 
 </style>
@@ -157,6 +186,47 @@ button{
 
 </div>
 
+<div class="modal" id="imageModal">
+
+    <img id="modalImage">
+
+    <div class="slideControls">
+
+        <button onclick="closeModal()">
+            關閉
+        </button>
+
+        <button onclick="startSlideshow()">
+            自動播放
+        </button>
+
+        <button onclick="stopSlideshow()">
+            停止播放
+        </button>
+
+        <input 
+            type="number"
+            id="slideTime"
+            value="3"
+            min="1"
+        >
+
+        <select id="slideMode">
+
+            <option value="loop">
+                固定循環
+            </option>
+
+            <option value="random">
+                隨機循環
+            </option>
+
+        </select>
+
+    </div>
+
+</div>
+
 <script>
 
 // ===== 通關密碼 =====
@@ -167,6 +237,10 @@ const API_KEY = "03281f0e429426c67875d5054df0412a";
 
 // ===== 目前資料夾 =====
 let currentFolder = "";
+
+// ===== 播放 =====
+let slideshowInterval;
+let slideshowIndex = 0;
 
 // ===== 登入 =====
 function login(){
@@ -277,7 +351,10 @@ function openFolder(folder){
         card.className = "card";
 
         card.innerHTML = `
-            <img src="${url}">
+            <img 
+                src="${url}"
+                onclick="openModal('${url}')"
+            >
 
             <button 
                 class="deleteBtn"
@@ -384,6 +461,92 @@ function deleteImage(index){
     );
 
     openFolder(currentFolder);
+
+}
+
+// ===== 放大圖片 =====
+function openModal(url){
+
+    document
+        .getElementById("imageModal")
+        .style.display = "flex";
+
+    document
+        .getElementById("modalImage")
+        .src = url;
+
+}
+
+// ===== 關閉 =====
+function closeModal(){
+
+    stopSlideshow();
+
+    document
+        .getElementById("imageModal")
+        .style.display = "none";
+
+}
+
+// ===== 停止播放 =====
+function stopSlideshow(){
+
+    clearInterval(slideshowInterval);
+
+}
+
+// ===== 自動播放 =====
+function startSlideshow(){
+
+    stopSlideshow();
+
+    let folders = JSON.parse(
+        localStorage.getItem("folders")
+    ) || {};
+
+    let images = folders[currentFolder] || [];
+
+    if(images.length === 0){
+
+        alert("沒有圖片");
+
+        return;
+
+    }
+
+    let seconds = parseInt(
+        document.getElementById("slideTime").value
+    );
+
+    let mode = document
+        .getElementById("slideMode")
+        .value;
+
+    slideshowIndex = 0;
+
+    openModal(images[slideshowIndex]);
+
+    slideshowInterval = setInterval(()=>{
+
+        if(mode === "random"){
+
+            slideshowIndex = Math.floor(
+                Math.random() * images.length
+            );
+
+        }else{
+
+            slideshowIndex++;
+
+            if(slideshowIndex >= images.length){
+                slideshowIndex = 0;
+            }
+
+        }
+
+        openModal(images[slideshowIndex]);
+
+    }, seconds * 1000);
 
 }
 
