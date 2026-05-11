@@ -3,19 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Private Gallery</title>
 
 <style>
 
 body{
     margin:0;
-    background:#0f0f0f;
+    background:#111;
     color:white;
     font-family:Arial;
 }
 
-.loginPage{
+.login{
     height:100vh;
     display:flex;
     justify-content:center;
@@ -23,51 +22,23 @@ body{
     flex-direction:column;
 }
 
-.loginBox{
-    background:#1b1b1b;
-    padding:40px;
-    border-radius:20px;
-    width:320px;
-    box-shadow:0 0 30px rgba(0,0,0,0.5);
-}
-
-.title{
-    text-align:center;
-    font-size:32px;
-    margin-bottom:10px;
-}
-
-.subtitle{
-    text-align:center;
-    color:#888;
-    margin-bottom:30px;
-}
-
 input{
-    width:100%;
-    padding:14px;
+    padding:12px;
+    width:260px;
     border:none;
-    border-radius:12px;
-    margin-bottom:15px;
-    background:#2b2b2b;
-    color:white;
+    border-radius:10px;
+    margin-top:10px;
     font-size:16px;
-    box-sizing:border-box;
 }
 
 button{
-    width:100%;
-    padding:14px;
+    padding:12px 20px;
     border:none;
-    border-radius:12px;
-    background:#ff3b5c;
+    border-radius:10px;
+    cursor:pointer;
+    background:#ff4d6d;
     color:white;
     font-size:16px;
-    cursor:pointer;
-}
-
-button:hover{
-    opacity:0.9;
 }
 
 .gallery{
@@ -82,10 +53,6 @@ button:hover{
     flex-wrap:wrap;
 }
 
-.uploadInput{
-    flex:1;
-}
-
 .grid{
     display:grid;
     grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
@@ -94,7 +61,7 @@ button:hover{
 
 .card{
     background:#1b1b1b;
-    border-radius:15px;
+    border-radius:12px;
     overflow:hidden;
 }
 
@@ -104,100 +71,118 @@ button:hover{
 }
 
 .deleteBtn{
+    width:100%;
     border-radius:0;
     background:#ff2d55;
 }
 
-.empty{
-    color:#777;
+.title{
+    font-size:30px;
+    margin-bottom:10px;
+}
+
+.info{
+    color:#999;
+    margin-bottom:20px;
+}
+
+.folderCard{
+    padding:40px;
     text-align:center;
-    margin-top:100px;
-    font-size:20px;
+    font-size:22px;
+    cursor:pointer;
+}
+
+.backBtn{
+    margin-bottom:20px;
 }
 
 </style>
 </head>
 <body>
 
-<div class="loginPage" id="loginPage">
+<div class="login" id="loginBox">
 
-    <div class="loginBox">
+    <h1>Private Gallery</h1>
 
-        <div class="title">
-            Private Gallery
-        </div>
+    <input 
+        type="password" 
+        id="password" 
+        placeholder="輸入密碼"
+    >
 
-        <div class="subtitle">
-            輸入通關密碼
-        </div>
-
-        <input 
-            type="password" 
-            id="passwordInput"
-            placeholder="Password"
-        >
-
-        <button onclick="login()">
-            進入相簿
-        </button>
-
-    </div>
+    <button onclick="login()">
+        進入
+    </button>
 
 </div>
 
-<div class="gallery" id="galleryPage">
+<div class="gallery" id="galleryBox">
 
-    <h1>Private Gallery</h1>
+    <div class="title">
+        Private Gallery
+    </div>
+
+    <div class="info">
+        圖片只存在你的瀏覽器
+    </div>
+
+    <button 
+        class="backBtn"
+        onclick="loadFolders()"
+    >
+        返回資料夾
+    </button>
 
     <div class="topbar">
 
         <input 
-            class="uploadInput"
             type="file" 
-            id="fileInput"
+            id="upload" 
             accept="image/*"
             multiple
         >
 
-        <button onclick="uploadImages()">
+        <button onclick="uploadImage()">
             上傳圖片
+        </button>
+
+        <button onclick="createFolder()">
+            建立資料夾
         </button>
 
     </div>
 
-    <div class="grid" id="galleryGrid"></div>
-
-    <div class="empty" id="emptyText">
-        尚未上傳圖片
-    </div>
+    <div class="grid" id="grid"></div>
 
 </div>
 
 <script>
 
-// ===== 通關密碼 =====
-const PASSWORD = "9872376832";
+// ===== 密碼 =====
+const SITE_PASSWORD = "9872376832";
+
+// ===== 目前資料夾 =====
+let currentFolder = "";
 
 // ===== 登入 =====
 function login(){
 
-    const input = document
-        .getElementById("passwordInput")
+    const pass = document
+        .getElementById("password")
         .value;
 
-    if(input === PASSWORD){
-
-        sessionStorage.setItem("galleryLogin","true");
+    if(pass === SITE_PASSWORD){
 
         document
-            .getElementById("loginPage")
+            .getElementById("loginBox")
             .style.display = "none";
 
         document
-            .getElementById("galleryPage")
+            .getElementById("galleryBox")
             .style.display = "block";
 
-        loadGallery();
+        loadFolders();
 
     }else{
 
@@ -207,40 +192,134 @@ function login(){
 
 }
 
-// ===== 已登入 =====
-if(sessionStorage.getItem("galleryLogin") === "true"){
+// ===== 建立資料夾 =====
+function createFolder(){
 
-    window.onload = () => {
+    const folder = prompt("輸入資料夾名稱");
 
-        document
-            .getElementById("loginPage")
-            .style.display = "none";
+    if(!folder) return;
 
-        document
-            .getElementById("galleryPage")
-            .style.display = "block";
+    let folders = JSON.parse(
+        localStorage.getItem("folders")
+    ) || {};
 
-        loadGallery();
-
+    if(!folders[folder]){
+        folders[folder] = [];
     }
+
+    localStorage.setItem(
+        "folders",
+        JSON.stringify(folders)
+    );
+
+    loadFolders();
+
+}
+
+// ===== 載入資料夾 =====
+function loadFolders(){
+
+    currentFolder = "";
+
+    const grid = document
+        .getElementById("grid");
+
+    grid.innerHTML = "";
+
+    let folders = JSON.parse(
+        localStorage.getItem("folders")
+    ) || {};
+
+    Object.keys(folders).forEach(folder=>{
+
+        const card = document.createElement("div");
+
+        card.className = "card";
+
+        card.innerHTML = `
+            <div 
+                class="folderCard"
+                onclick="openFolder('${folder}')"
+            >
+                📁 ${folder}
+            </div>
+        `;
+
+        grid.appendChild(card);
+
+    });
+
+}
+
+// ===== 開啟資料夾 =====
+function openFolder(folder){
+
+    currentFolder = folder;
+
+    const grid = document
+        .getElementById("grid");
+
+    grid.innerHTML = "";
+
+    let folders = JSON.parse(
+        localStorage.getItem("folders")
+    ) || {};
+
+    let images = folders[folder] || [];
+
+    images.forEach((url,index)=>{
+
+        const card = document.createElement("div");
+
+        card.className = "card";
+
+        card.innerHTML = `
+            <img src="${url}">
+
+            <button 
+                class="deleteBtn"
+                onclick="deleteImage(${index})"
+            >
+                刪除
+            </button>
+        `;
+
+        grid.appendChild(card);
+
+    });
 
 }
 
 // ===== 上傳圖片 =====
-function uploadImages(){
+function uploadImage(){
+
+    if(currentFolder === ""){
+
+        alert("請先進入資料夾");
+
+        return;
+
+    }
 
     const files = document
-        .getElementById("fileInput")
+        .getElementById("upload")
         .files;
 
     if(files.length === 0){
+
         alert("請選擇圖片");
+
         return;
+
     }
 
-    let images = JSON.parse(
-        localStorage.getItem("galleryImages")
-    ) || [];
+    let folders = JSON.parse(
+        localStorage.getItem("folders")
+    ) || {};
+
+    if(!folders[currentFolder]){
+        folders[currentFolder] = [];
+    }
 
     let loaded = 0;
 
@@ -250,18 +329,22 @@ function uploadImages(){
 
         reader.onload = function(e){
 
-            images.unshift(e.target.result);
+            folders[currentFolder].unshift(
+                e.target.result
+            );
 
             loaded++;
 
             if(loaded === files.length){
 
                 localStorage.setItem(
-                    "galleryImages",
-                    JSON.stringify(images)
+                    "folders",
+                    JSON.stringify(folders)
                 );
 
-                loadGallery();
+                openFolder(currentFolder);
+
+                alert("上傳成功");
 
             }
 
@@ -273,71 +356,21 @@ function uploadImages(){
 
 }
 
-// ===== 載入圖片 =====
-function loadGallery(){
-
-    const grid = document
-        .getElementById("galleryGrid");
-
-    const empty = document
-        .getElementById("emptyText");
-
-    grid.innerHTML = "";
-
-    let images = JSON.parse(
-        localStorage.getItem("galleryImages")
-    ) || [];
-
-    if(images.length === 0){
-
-        empty.style.display = "block";
-
-    }else{
-
-        empty.style.display = "none";
-
-    }
-
-    images.forEach((img,index)=>{
-
-        const card = document.createElement("div");
-
-        card.className = "card";
-
-        card.innerHTML = `
-        
-            <img src="${img}">
-
-            <button 
-                class="deleteBtn"
-                onclick="deleteImage(${index})"
-            >
-                刪除
-            </button>
-
-        `;
-
-        grid.appendChild(card);
-
-    });
-
-}
-
-// ===== 刪除 =====
+// ===== 刪除圖片 =====
 function deleteImage(index){
 
-    let images = JSON.parse(
-        localStorage.getItem("galleryImages")
-    ) || [];
+    let folders = JSON.parse(
+        localStorage.getItem("folders")
+    ) || {};
 
-    images.splice(index,1);
+    folders[currentFolder].splice(index,1);
 
     localStorage.setItem(
-        "galleryImages",
-        JSON.stringify(images)
+        "folders",
+        JSON.stringify(folders)
     );
 
-    loadGallery();
+    openFolder(currentFolder);
 
 }
 
